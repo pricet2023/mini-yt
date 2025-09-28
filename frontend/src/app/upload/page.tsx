@@ -1,0 +1,122 @@
+"use client";
+
+import { useState } from "react";
+
+interface Video {
+  id: number;
+  title: string;
+  description?: string;
+  status: string;
+  uploadedAt: string;
+}
+
+export default function UploadPage() {
+  const [file, setFile] = useState<File | null>(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [uploads, setUploads] = useState<Video[]>([]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!file) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("title", title);
+    formData.append("description", description);
+
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) {
+      alert("Upload failed");
+      return;
+    }
+
+    const video: Video = await res.json();
+
+    // Add to uploads list
+    setUploads((prev) => [...prev, video]);
+
+    // Subscribe to status updates via SSE
+    const evtSource = new EventSource(`/api/upload/status?id=${video.id}`);
+    evtSource.onmessage = (e) => {
+      const updated: Video = JSON.parse(e.data);
+      setUploads((prev) =>
+        prev.map((v) => (v.id === updated.id ? updated : v))
+      );
+      if (updated.status === "complete") evtSource.close();
+    };
+
+    // reset form
+    setFile(null);
+    setTitle("");
+    setDescription("");
+
+  }
+
+  return (
+    <div className="max-w-md mx-auto">
+      <h2 className="text-2xl font-bold mb-4">Upload a Video</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input
+          type="text"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="border w-full p-2 rounded"
+        />
+        <textarea
+          placeholder="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="border w-full p-2 rounded"
+        />
+        <input
+          type="file"
+          accept="video/*"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          className="block"
+        />
+        <button
+          type="submit"
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Upload
+        </button>
+      </form>
+
+      {uploads.length > 0 && (
+        <div>
+          <h3 className="text-xl font-semibold mb-2">Uploads in Progress</h3>
+          <table className="w-full border">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="border px-2 py-1">Title</th>
+                <th className="border px-2 py-1">Description</th>
+                <th className="border px-2 py-1">Status</th>
+                <th className="border px-2 py-1">Uploaded At</th>
+              </tr>
+            </thead>
+            <tbody>
+              {uploads.map((video) => (
+                <tr key={video.id}>
+                  <td className="border px-2 py-1">{video.title}</td>
+                  <td className="border px-2 py-1">{video.description}</td>
+                  <td className="border px-2 py-1">{video.status}</td>
+                  <td className="border px-2 py-1">
+                    {new Date(video.uploadedAt).toLocaleTimeString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}

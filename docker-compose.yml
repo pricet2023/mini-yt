@@ -8,10 +8,12 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=youtube_clone
     ports:
       - '5432:5432'
     volumes: 
-      - db:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data      
     
   # Minio S3 server for object storage
   minio:
@@ -36,7 +38,28 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+  # ES setup for configuring the index
+  es-setup:
+    image: curlimages/curl:8.5.0
+    depends_on:
+      - elasticsearch
+    entrypoint: >
+      sh -c "
+        echo 'Waiting for Elasticsearch...';
+        until curl -s http://elasticsearch:9200 >/dev/null; do sleep 2; done;
+        echo 'Creating index...';
+        curl -X PUT http://elasticsearch:9200/videos
+          -H 'Content-Type: application/json'
+          -d @/config/videos-index.json;
+        echo 'Index created';
+      "
+    volumes:
+      - ./es-config:/config
 
 volumes:
-  db:
+  pgdata:
+    driver: local
+  esdata:
     driver: local
