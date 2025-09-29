@@ -20,11 +20,11 @@ export async function POST(req: Request) {
   });
 
   const response = await s3.send(command);
-    
+
   // Update Postgres: mark as complete
   const video = await prisma.video.update({
     where: { id: videoId },
-    data: { status: "complete"},
+    data: { status: "complete" },
   });
 
   // Update Elasticsearch: mark as complete
@@ -38,5 +38,5 @@ export async function POST(req: Request) {
   return NextResponse.json({
     s3: response,
     video,
-    });
+  });
 }

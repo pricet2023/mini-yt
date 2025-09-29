@@ -17,15 +17,7 @@ export default function UploadPage() {
   const [description, setDescription] = useState("");
   const [uploads, setUploads] = useState<Video[]>([]);
 
-  async function s3MultipartUpload(file: File, videoId: number) {
-    // init multipart upload
-    const initRes = await fetch("/api/upload/multipart/init", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ filename: file.name, contentType: file.type }),
-    });
-    const { uploadId, key } = await initRes.json();
-    
+  async function s3MultipartUpload(file: File, key: string, uploadId: number, videoId: number) {
     // Chunk up file
     const chunkSize = 5 * 1024 * 1024; // 5MB per chunk (min allowed)
     const chunks: Blob[] = [];
@@ -79,11 +71,11 @@ export default function UploadPage() {
     }
 
     const formData = new FormData();
-    formData.append("file", file);
     formData.append("title", title);
+    formData.append("filename", file.name);
     formData.append("description", description);
-
-    const res = await fetch("/api/upload", {
+    
+    const res = await fetch("/api/upload/multipart/init", {
       method: "POST",
       body: formData,
     });
@@ -93,13 +85,17 @@ export default function UploadPage() {
       return;
     }
 
-    const video: Video = await res.json();
+    const respJson = await res.json();
+    const uploadId = respJson.get("uploadId");
+    const s3key = respJson.get("s3key");
+    const video: Video = respJson.get("video");
 
     // Add to uploads list
     setUploads((prev) => [...prev, video]);
 
-    // Spin off worker to upload video to s3
-    s3MultipartUpload(file, video.id);
+    // Spin off worker to upload video to s3, 
+    // This will upload the parts and then finalise
+    s3MultipartUpload(file, s3key, uploadId, video.id);
 
     // reset form
     setFile(null);

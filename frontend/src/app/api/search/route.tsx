@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     ],
   });
 
-  const hits = results.hits.hits.map((hit: any) => hit._source);
+  const hits = results.hits.hits.map((hit) => hit._source);
 
   return NextResponse.json(hits);
 }
