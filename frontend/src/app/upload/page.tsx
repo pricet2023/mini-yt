@@ -8,6 +8,7 @@ interface Video {
   description?: string;
   status: string;
   uploadedAt: string;
+  s3url: string;
 }
 
 export default function UploadPage() {
@@ -15,6 +16,61 @@ export default function UploadPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [uploads, setUploads] = useState<Video[]>([]);
+
+  async function s3MultipartUpload(file: File, videoId: number) {
+    // init multipart upload
+    const initRes = await fetch("/api/upload/multipart/init", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename: file.name, contentType: file.type }),
+    });
+    const { uploadId, key } = await initRes.json();
+    
+    // Chunk up file
+    const chunkSize = 5 * 1024 * 1024; // 5MB per chunk (min allowed)
+    const chunks: Blob[] = [];
+    for (let start = 0; start < file.size; start += chunkSize) {
+      chunks.push(file.slice(start, start + chunkSize));
+    }
+
+    const parts: { ETag: string; PartNumber: number }[] = [];
+
+    // 2. Upload parts asynchronously
+    await Promise.all(
+      chunks.map(async (chunk, i) => {
+        const partNumber = i + 1;
+
+        // Ask backend for signed URL for this part
+        const signRes = await fetch("/api/upload/multipart/sign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key, uploadId, partNumber }),
+        });
+        const { url } = await signRes.json();
+
+        // Upload chunk directly to S3
+        const res = await fetch(url, {
+          method: "PUT",
+          body: chunk,
+        });
+
+        if (!res.ok) throw new Error(`Part ${partNumber} failed`);
+
+        const eTag = res.headers.get("ETag")!;
+        parts.push({ ETag: eTag, PartNumber: partNumber });
+      })
+    );
+
+    // 3. Finalize multipart upload
+    const completeRes = await fetch("/api/upload/multipart/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key, uploadId, parts, videoId }),
+    });
+
+    const result = await completeRes.json();
+    console.log("Upload complete", result);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,21 +98,13 @@ export default function UploadPage() {
     // Add to uploads list
     setUploads((prev) => [...prev, video]);
 
-    // Subscribe to status updates via SSE
-    const evtSource = new EventSource(`/api/upload/status?id=${video.id}`);
-    evtSource.onmessage = (e) => {
-      const updated: Video = JSON.parse(e.data);
-      setUploads((prev) =>
-        prev.map((v) => (v.id === updated.id ? updated : v))
-      );
-      if (updated.status === "complete") evtSource.close();
-    };
+    // Spin off worker to upload video to s3
+    s3MultipartUpload(file, video.id);
 
     // reset form
     setFile(null);
     setTitle("");
     setDescription("");
-
   }
 
   return (

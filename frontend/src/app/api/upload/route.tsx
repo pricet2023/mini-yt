@@ -3,9 +3,21 @@ import { writeFile } from "fs/promises";
 import { Client } from "@elastic/elasticsearch";
 import path from "path";
 import { PrismaClient } from "@prisma/client";
+import { S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const prisma = new PrismaClient();
 const es = new Client({ node: "http://localhost:9200" });
+const s3Client = new S3Client({
+  region: "eu-west-1",
+  endpoint: "http://localhost:9000",
+  credentials: {
+    accessKeyId: "minioadmin",
+    secretAccessKey: "minioadmin",
+  },
+  forcePathStyle: true,
+});
 
 export async function POST(req: Request) {
   const formData = await req.formData();
@@ -18,12 +30,21 @@ export async function POST(req: Request) {
   }
 
   // Write tmp file locally
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-  const uploadDir = path.join(process.cwd(), "uploads");
+  // const bytes = await file.arrayBuffer();
+  // const buffer = Buffer.from(bytes);
+  // const uploadDir = path.join(process.cwd(), "uploads");
   const filename = `${Date.now()}-${file.name}`;
-  const filePath = path.join(uploadDir, filename);
-  await writeFile(filePath, buffer);
+  // const filePath = path.join(uploadDir, filename);
+  // await writeFile(filePath, buffer);
+
+  // Get S3 to generate a preSigned URL to give to the client
+  const command = new PutObjectCommand({
+    Bucket: "videos",
+    Key: filename,
+    ContentType: "video/mp4",
+  });
+  const s3url = await getSignedUrl(s3Client, command, {expiresIn: 60});
+
 
   // Save metadata in Postgres
   const video = await prisma.video.create({
@@ -44,26 +65,5 @@ export async function POST(req: Request) {
     },
   });
 
-  pushUploadToS3(video.id, path.join(uploadDir, filename));
-
   return NextResponse.json(video);
-}
-
-async function pushUploadToS3(videoId: number, filePath: string) {
-  // TODO: PUSH TO S3
-
-  // Update db with status
-  await prisma.video.update({
-    where: {id: videoId},
-    data: { status: "complete"},
-  });
-
-  // Update ES
-  await es.update({
-    index: "videos",
-    id: videoId.toString(),
-    doc: { status: "complete" },
-  });
-
-  // TODO: notify client via SSE
 }

@@ -9,8 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.896.0",
+    "@aws-sdk/s3-request-presigner": "^3.896.0",
     "@elastic/elasticsearch": "^9.1.1",
     "@prisma/client": "^6.16.2",
+    "minio": "^8.0.6",
     "next": "15.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0"
