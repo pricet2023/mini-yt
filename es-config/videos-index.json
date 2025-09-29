@@ -4,7 +4,7 @@
       "id":          { "type": "integer" },
       "title":       { "type": "text" },
       "description": { "type": "text" },
-      "filename":    { "type": "keyword" },
+      "s3url":    { "type": "text" },
       "uploadedAt":  { "type": "date" },
       "status": { "type": "text" }
     }

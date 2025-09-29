@@ -33,14 +33,14 @@ export async function POST(req: Request) {
   // const bytes = await file.arrayBuffer();
   // const buffer = Buffer.from(bytes);
   // const uploadDir = path.join(process.cwd(), "uploads");
-  const filename = `${Date.now()}-${file.name}`;
+  const s3key = `${Date.now()}-${file.name}`;
   // const filePath = path.join(uploadDir, filename);
   // await writeFile(filePath, buffer);
 
   // Get S3 to generate a preSigned URL to give to the client
   const command = new PutObjectCommand({
     Bucket: "videos",
-    Key: filename,
+    Key: s3key,
     ContentType: "video/mp4",
   });
   const s3url = await getSignedUrl(s3Client, command, {expiresIn: 60});
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
 
   // Save metadata in Postgres
   const video = await prisma.video.create({
-    data: { title, description, filename, status: "uploading"},
+    data: { title, description, , status: "uploading"},
   });
 
   // Index in Elasticsearch

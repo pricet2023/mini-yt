@@ -11,7 +11,7 @@ model Video {
   id          Int      @id @default(autoincrement())
   title       String
   description String?
-  filename    String
+  s3url    String
   uploadedAt  DateTime @default(now())
   status      String @default("uploading")
 }
