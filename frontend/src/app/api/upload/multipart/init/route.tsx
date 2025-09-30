@@ -7,27 +7,43 @@ import { Client } from "@elastic/elasticsearch";
 const prisma = new PrismaClient();
 const es = new Client({ node: "http://localhost:9200" });
 
-export async function POST(req: Request) {
-  const formData = await req.json();
-  const title = formData.get("title") as string;
-  const filename = formData.get("filename") as string;
-  const description = formData.get("description") as string;
-  const s3key = `${Date.now()}-${filename}`;
+interface InitReqBody {
+  title: string,
+  description: string,
+  filename: string,
+}
 
+export async function POST(req: Request) {
+  console.log("Handling multipart init request")
+  const initReq: InitReqBody = await req.json();
+  const s3key = `${Date.now()}-${initReq.filename}`;
+
+  
+  console.log("Making createmultipart req")
   const command = new CreateMultipartUploadCommand({
     Bucket: process.env.MINIO_BUCKET!,
     Key: s3key,
     ContentType: "video/mp4",
   });
 
+  console.log("Sending createmultipart to minio")
+  console.log("Minio endpoint: ", process.env.MINIO_ENDPOINT)
   const response = await s3.send(command);
 
+
+
   // Save metadata in Postgres
-  const s3urlPrefix = process.env.MINIO_HOST === "" ? "s3://" : "http://" + process.env.MINIO_HOST + "/";
-  const s3url = s3urlPrefix + process.env.MINIO_BUCKET + "/" + s3key;
+  let s3url: string;
+  if (process.env.MINIO_ENDPOINT) {
+    s3url = process.env.MINIO_ENDPOINT + "/" + process.env.MINIO_BUCKET + "/" + s3key;
+  } else {
+    s3url = "s3://" + process.env.MINIO_BUCKET + "/" + s3key;
+  }
   const video = await prisma.video.create({
-    data: { title, description, s3url, status: "uploading" },
+    data: { title: initReq.title, description: initReq.description, s3url: s3url, status: "uploading" },
   });
+
+  console.log("Sent to postgres")
 
   // Index in Elasticsearch
   await es.index({
@@ -42,6 +58,8 @@ export async function POST(req: Request) {
       status: video.status
     },
   });
+
+  console.log("Sent to ES")
 
   return NextResponse.json({
     uploadId: response.UploadId,

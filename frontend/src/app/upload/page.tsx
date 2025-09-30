@@ -70,14 +70,13 @@ export default function UploadPage() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("filename", file.name);
-    formData.append("description", description);
-    
     const res = await fetch("/api/upload/multipart/init", {
       method: "POST",
-      body: formData,
+      body: JSON.stringify({
+        title: title,
+        filename: file.name,
+        description: description,
+      }),
     });
 
     if (!res.ok) {
