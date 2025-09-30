@@ -18,6 +18,8 @@ services:
       - db
       - elasticsearch
       - minio
+    networks:
+      - appnet
 
   # PostgreSQL DB for storing video metadata
   db:
@@ -31,7 +33,9 @@ services:
       - '5432:5432'
     volumes: 
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - pgdata:/var/lib/postgresql/data      
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - appnet   
     
   # Minio S3 server for object storage
   minio:
@@ -46,6 +50,8 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin
     volumes:
       - ./minio-data:/data
+    networks:
+      - appnet
 
   # Elastic search node for providing very fast search results
   elasticsearch:
@@ -75,9 +81,15 @@ services:
       "
     volumes:
       - ./es-config:/config
+    networks:
+      - appnet
 
 volumes:
   pgdata:
     driver: local
   esdata:
     driver: local
+
+networks:
+  appnet:
+    driver: bridge
