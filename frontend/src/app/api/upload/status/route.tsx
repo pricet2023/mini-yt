@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
       async start(controller) {
         const encoder = new TextEncoder();
         const interval = setInterval(async () => {
-          const video = await prisma.video.findUnique({ where: { id: videoId } });
+          const video = await prisma.videos.findUnique({ where: { id: videoId } });
           if (video) {
             controller.enqueue(
               encoder.encode(`data: ${JSON.stringify(video)}\n\n`)

@@ -5,7 +5,7 @@ import { PrismaClient } from "@prisma/client";
 import { Client as ESClient } from "@elastic/elasticsearch";
 
 const prisma = new PrismaClient();
-const es = new ESClient({ node: "http://localhost:9200" });
+const es = new ESClient({ node: process.env.ELASTICSEARCH_URL });
 
 export async function POST(req: Request) {
   const { key, uploadId, parts, videoId } = await req.json();
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   const response = await s3.send(command);
 
   // Update Postgres: mark as complete
-  const video = await prisma.video.update({
+  const video = await prisma.videos.update({
     where: { id: videoId },
     data: { status: "complete" },
   });

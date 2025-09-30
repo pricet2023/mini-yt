@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@elastic/elasticsearch";
 
-const es = new Client({ node: "http://localhost:9200" });
+const es = new Client({ node: process.env.ELASTICSEARCH_URL });
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
       },
     },
     sort: [
-      { uploadedAt: { order: "desc" } }
+      { uploaded_at: { order: "desc" } }
     ],
   });
 

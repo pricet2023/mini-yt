@@ -5,7 +5,7 @@
       "title":       { "type": "text" },
       "description": { "type": "text" },
       "s3url":    { "type": "text" },
-      "uploadedAt":  { "type": "date" },
+      "uploaded_at":  { "type": "date" },
       "status": { "type": "text" }
     }
   }

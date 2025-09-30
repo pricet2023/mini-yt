@@ -3,6 +3,6 @@ CREATE TABLE IF NOT EXISTS videos (
   title TEXT NOT NULL,
   description TEXT,
   s3url TEXT NOT NULL,
-  uploaded_at TIMESTAMP DEFAULT NOW()
+  uploaded_at TIMESTAMP DEFAULT NOW(),
   status TEXT DEFAULT 'uploading'
 );

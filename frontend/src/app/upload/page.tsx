@@ -7,8 +7,14 @@ interface Video {
   title: string;
   description?: string;
   status: string;
-  uploadedAt: string;
+  uploaded_at: string;
   s3url: string;
+}
+
+interface InitResp {
+   uploadId: string,
+    s3key: string,
+    video: Video,
 }
 
 export default function UploadPage() {
@@ -17,8 +23,9 @@ export default function UploadPage() {
   const [description, setDescription] = useState("");
   const [uploads, setUploads] = useState<Video[]>([]);
 
-  async function s3MultipartUpload(file: File, key: string, uploadId: number, videoId: number) {
+  async function s3MultipartUpload(file: File, key: string, uploadId: string, videoId: number) {
     // Chunk up file
+    console.log("chunking file");
     const chunkSize = 5 * 1024 * 1024; // 5MB per chunk (min allowed)
     const chunks: Blob[] = [];
     for (let start = 0; start < file.size; start += chunkSize) {
@@ -27,18 +34,22 @@ export default function UploadPage() {
 
     const parts: { ETag: string; PartNumber: number }[] = [];
 
+    console.log("uploading parts asynchronously");
     // 2. Upload parts asynchronously
     await Promise.all(
       chunks.map(async (chunk, i) => {
         const partNumber = i + 1;
 
         // Ask backend for signed URL for this part
+        console.log("getting pre-signed url");
         const signRes = await fetch("/api/upload/multipart/sign", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ key, uploadId, partNumber }),
         });
+
         const { url } = await signRes.json();
+        console.log("got presigned url, uploading part");
 
         // Upload chunk directly to S3
         const res = await fetch(url, {
@@ -47,6 +58,9 @@ export default function UploadPage() {
         });
 
         if (!res.ok) throw new Error(`Part ${partNumber} failed`);
+        
+        
+        console.log("uploaded part");
 
         const eTag = res.headers.get("ETag")!;
         parts.push({ ETag: eTag, PartNumber: partNumber });
@@ -54,6 +68,7 @@ export default function UploadPage() {
     );
 
     // 3. Finalize multipart upload
+    console.log("completing upload");
     const completeRes = await fetch("/api/upload/multipart/complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -70,6 +85,8 @@ export default function UploadPage() {
       return;
     }
 
+    console.log("Submitted video");
+
     const res = await fetch("/api/upload/multipart/init", {
       method: "POST",
       body: JSON.stringify({
@@ -83,18 +100,21 @@ export default function UploadPage() {
       alert("Upload failed");
       return;
     }
+    
+    console.log("Upload init'd");
+    
 
-    const respJson = await res.json();
-    const uploadId = respJson.get("uploadId");
-    const s3key = respJson.get("s3key");
-    const video: Video = respJson.get("video");
+    const resp: InitResp = await res.json();
 
     // Add to uploads list
-    setUploads((prev) => [...prev, video]);
+    setUploads((prev) => [...prev, resp.video]);
+
+    console.log("kicking off upload");
+
 
     // Spin off worker to upload video to s3, 
     // This will upload the parts and then finalise
-    s3MultipartUpload(file, s3key, uploadId, video.id);
+    s3MultipartUpload(file, resp.s3key, resp.uploadId, resp.video.id);
 
     // reset form
     setFile(null);
@@ -152,7 +172,7 @@ export default function UploadPage() {
                   <td className="border px-2 py-1">{video.description}</td>
                   <td className="border px-2 py-1">{video.status}</td>
                   <td className="border px-2 py-1">
-                    {new Date(video.uploadedAt).toLocaleTimeString()}
+                    {new Date(video.uploaded_at).toLocaleTimeString()}
                   </td>
                 </tr>
               ))}

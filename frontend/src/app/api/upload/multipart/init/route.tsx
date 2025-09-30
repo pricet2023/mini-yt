@@ -5,7 +5,7 @@ import { PrismaClient } from "@prisma/client";
 import { Client } from "@elastic/elasticsearch";
 
 const prisma = new PrismaClient();
-const es = new Client({ node: "http://localhost:9200" });
+const es = new Client({ node: process.env.ELASTICSEARCH_URL });
 
 interface InitReqBody {
   title: string,
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   const initReq: InitReqBody = await req.json();
   const s3key = `${Date.now()}-${initReq.filename}`;
 
-  
+
   console.log("Making createmultipart req")
   const command = new CreateMultipartUploadCommand({
     Bucket: process.env.MINIO_BUCKET!,
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
   } else {
     s3url = "s3://" + process.env.MINIO_BUCKET + "/" + s3key;
   }
-  const video = await prisma.video.create({
+  const video = await prisma.videos.create({
     data: { title: initReq.title, description: initReq.description, s3url: s3url, status: "uploading" },
   });
 
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
       title: video.title,
       description: video.description,
       s3url: video.s3url,
-      uploadedAt: video.uploadedAt,
+      uploaded_at: video.uploaded_at,
       status: video.status
     },
   });

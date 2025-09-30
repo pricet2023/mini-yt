@@ -8,11 +8,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Video {
+model videos {
   id          Int      @id @default(autoincrement())
   title       String
   description String?
   s3url    String
-  uploadedAt  DateTime @default(now())
+  uploaded_at  DateTime @default(now())
   status      String @default("uploading")
 }

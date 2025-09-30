@@ -7,7 +7,7 @@ interface Video {
   title: string;
   description?: string;
   status: string;
-  uploadedAt: string;
+  uploaded_at: string;
 }
 
 export default function SearchPage() {
@@ -60,7 +60,7 @@ export default function SearchPage() {
                 <td className="border px-2 py-1">{video.description}</td>
                 <td className="border px-2 py-1">{video.status}</td>
                 <td className="border px-2 py-1">
-                  {new Date(video.uploadedAt).toLocaleString()}
+                  {new Date(video.uploaded_at).toLocaleString()}
                 </td>
               </tr>
             ))}

@@ -6,6 +6,7 @@ import { UploadPartCommand } from "@aws-sdk/client-s3";
 export async function POST(req: Request) {
   const { key, uploadId, partNumber } = await req.json();
 
+  console.log("getting presigned url");
   const command = new UploadPartCommand({
     Bucket: process.env.MINIO_BUCKET!,
     Key: key,
@@ -14,6 +15,9 @@ export async function POST(req: Request) {
   });
 
   const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+
+  console.log("got pre-signed url");
+
 
   return NextResponse.json({ url });
 }

@@ -8,7 +8,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/mydb
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/youtube_clone
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - MINIO_ENDPOINT=http://minio:9000
       - MINIO_ACCESS_KEY=minioadmin
@@ -24,6 +24,7 @@ services:
   # PostgreSQL DB for storing video metadata
   db:
     image: postgres:14.1-alpine
+    container_name: db
     restart: always
     environment:
       - POSTGRES_USER=postgres
@@ -52,10 +53,26 @@ services:
       - ./minio-data:/data
     networks:
       - appnet
+  
+  # Creates bucket in minio
+  createbuckets:
+    image: minio/mc
+    container_name: createbuckets
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until (mc alias set local http://minio:9000 minioadmin minioadmin) do echo '...waiting...' && sleep 1; done &&
+      mc mb local/videos || true &&
+      mc policy set public local/videos
+      "
+    networks:
+      - appnet
 
   # Elastic search node for providing very fast search results
   elasticsearch:
-    image: elasticsearch:8.8.0
+    image: elasticsearch:9.1.4
+    container_name: elasticsearch
     ports:
       - 9200:9200
       - 9300:9300
@@ -64,9 +81,12 @@ services:
       - xpack.security.enabled=false
     volumes:
       - esdata:/usr/share/elasticsearch/data
+    networks:
+      - appnet
   # ES setup for configuring the index
   es-setup:
     image: curlimages/curl:8.5.0
+    container_name: es-setup
     depends_on:
       - elasticsearch
     entrypoint: >
