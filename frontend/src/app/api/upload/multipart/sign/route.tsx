@@ -17,6 +17,6 @@ export async function POST(req: Request) {
   const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
   const relativeUrl = new URL(url).pathname + new URL(url).search;
   console.log("got pre-signed url, ", relativeUrl);
-  const publicUrl = process.env.MINIO_PUBLIC_ENDPOINT + relativeUrl;
+  const publicUrl = "http://localhost:9000" + relativeUrl;
   return NextResponse.json({ publicUrl });
 }

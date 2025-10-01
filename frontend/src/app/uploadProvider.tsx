@@ -13,6 +13,10 @@ type UploadContextType = {
     s3MultipartUpload: (file: File, title: string, key: string, uploadId: string, videoId: number) => void;
 }
 
+interface signResp {
+    publicUrl: string,
+}
+
 const UploadContext = createContext<UploadContextType | null>(null);
 
 export function UploadProvider({ children }: { children: React.ReactNode }) {
@@ -53,12 +57,13 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
                     body: JSON.stringify({ key, uploadId, partNumber }),
                 });
 
-                const { url } = await signRes.json();
-                console.log("got presigned url, uploading part");
+                const resp: signResp = await signRes.json();
+                console.log("got presigned url, ", resp.publicUrl);
 
                 // Upload chunk directly to S3
-                const res = await fetch(url, {
+                const res = await fetch(resp.publicUrl, {
                     method: "PUT",
+                    headers: { "Content-Type": "video/mp4" },
                     body: chunk,
                 });
 

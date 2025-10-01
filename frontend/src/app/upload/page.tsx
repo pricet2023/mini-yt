@@ -104,8 +104,7 @@ export default function UploadPage() {
             <thead className="bg-gray-100">
               <tr>
                 <th className="border px-2 py-1">Title</th>
-                <th className="border px-2 py-1">Description</th>
-                <th className="border px-2 py-1">Status</th>
+                <th className="border px-2 py-1">Progress</th>
                 <th className="border px-2 py-1">Uploaded At</th>
               </tr>
             </thead>
