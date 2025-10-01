@@ -34,8 +34,8 @@ export async function POST(req: Request) {
 
   // Save metadata in Postgres
   let s3url: string;
-  if (process.env.MINIO_ENDPOINT) {
-    s3url = process.env.MINIO_ENDPOINT + "/" + process.env.MINIO_BUCKET + "/" + s3key;
+  if (process.env.MINIO_PUBLIC_ENDPOINT) {
+    s3url = process.env.MINIO_PUBLIC_ENDPOINT + "/" + process.env.MINIO_BUCKET + "/" + s3key;
   } else {
     s3url = "s3://" + process.env.MINIO_BUCKET + "/" + s3key;
   }
