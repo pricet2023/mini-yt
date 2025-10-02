@@ -29,7 +29,7 @@ The goal is to replicate the core features of a video-sharing platform:
     cd mini-yt
 
 2. **Create .env**
-    Change or copy env.example to .env
+- Change or copy env.example to .env
 
 3. **Start services**
     ```bash
@@ -48,10 +48,10 @@ The goal is to replicate the core features of a video-sharing platform:
     apache → Reverse proxy to MinIO (fixes Host header for presigned URLs)
 
 4. **Access services**
-    - **Frontend:**: http{NEXT_PUBLIC_API_HOST}:3000
+- **Frontend:**: http{NEXT_PUBLIC_API_HOST}:3000
 
-    - **MinIO Console**: http://{NEXT_PUBLIC_API_HOST}:9001
+- **MinIO Console**: http://{NEXT_PUBLIC_API_HOST}:9001
 
-    - **Elasticsearch**: http://{NEXT_PUBLIC_API_HOST}:9200
+- **Elasticsearch**: http://{NEXT_PUBLIC_API_HOST}:9200
 
-    - **Postgres**: http://{NEXT_PUBLIC_API_HOST}:5432 (username/password in .env)
+- **Postgres**: http://{NEXT_PUBLIC_API_HOST}:5432 (username/password in .env)
