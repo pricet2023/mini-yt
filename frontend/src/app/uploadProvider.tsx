@@ -10,7 +10,13 @@ type Upload = {
 
 type UploadContextType = {
     uploads: Upload[];
-    s3MultipartUpload: (file: File, title: string, key: string, uploadId: string, videoId: number) => void;
+    s3MultipartUpload: (file: File,
+        title: string,
+        key: string,
+        uploadId: string,
+        videoId: number,
+        uploaded_at: string,
+    ) => void;
 }
 
 interface signResp {
@@ -22,12 +28,20 @@ const UploadContext = createContext<UploadContextType | null>(null);
 export function UploadProvider({ children }: { children: React.ReactNode }) {
     const [uploads, setUploads] = useState<Upload[]>([]);
 
-    async function s3MultipartUpload(file: File, title: string, key: string, uploadId: string, videoId: number) {
+    async function s3MultipartUpload(
+        file: File,
+        title: string,
+        key: string,
+        uploadId: string,
+        videoId: number,
+        uploaded_at: string,
+    ) {
+
         const newUpload: Upload = {
             uploadId: uploadId,
             title: title,
             progress: 0.0,
-            uploaded_at: String(Date.now()),
+            uploaded_at: uploaded_at,
         }
         setUploads((prev) => [...prev, newUpload]);
 
@@ -95,6 +109,8 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
 
         const result = await completeRes.json();
         console.log("Upload complete", result);
+        // Remove upload from list
+        setUploads((prev) => prev.filter((u) => u.uploadId !== uploadId));
     }
 
     return (

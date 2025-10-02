@@ -50,8 +50,13 @@ export async function GET(
 
         const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
         const relativeUrl = new URL(url).pathname + new URL(url).search;
-        const publicUrl = "http://localhost:9000" + relativeUrl;
-        return NextResponse.json({ url: publicUrl });
+        const publicUrl = process.env.NEXT_PUBLIC_MINIO_ENDPOINT + relativeUrl;
+        return NextResponse.json({
+            title: video.title, 
+            description: video.description, 
+            uploaded_at: video.uploaded_at, 
+            s3url: publicUrl
+        });
     } catch (err) {
         console.error("Error generating presigned URL:", err);
         return NextResponse.json({ error: "Could not get video" }, { status: 500 });

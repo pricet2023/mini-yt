@@ -8,12 +8,8 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/youtube_clone
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - MINIO_ENDPOINT=http://minio:9000
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin
-      - MINIO_BUCKET=videos
+    env_file:
+      - ./frontend/.env
     depends_on:
       - db
       - elasticsearch

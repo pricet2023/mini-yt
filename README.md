@@ -26,32 +26,34 @@ The goal is to replicate the core features of a video-sharing platform:
 ## 🐳 Running with Docker Compose
 
 1. **Clone the repo**
-   ```bash
-   git clone https://github.com/<your-repo>.git
-   cd <your-repo>
+    ```bash
+    git clone https://github.com/<your-repo>.git
+    cd <your-repo>
 
 2. **Create .env**
+    Change or copy env.example to .env
 
 3. **Start services**
+    ```bash
     docker-compose up --build
-This brings up:
+    ```
+    This brings up:
 
-frontend → Next.js app
+    frontend → Next.js app
 
-postgres → Metadata database
+    postgres → Metadata database
 
-minio → Object storage
+    minio → Object storage
 
-elasticsearch → Search indexing
+    elasticsearch → Search indexing
 
-apache → Reverse proxy to MinIO (fixes Host header for presigned URLs)
+    apache → Reverse proxy to MinIO (fixes Host header for presigned URLs)
 
 4. **Access services**
+    - **Frontend:**: http{PUBLIC_URL}:3000
 
-Frontend: http://localhost:3000
+    - **MinIO Console**: http://{PUBLIC_URL}:9001
 
-MinIO Console: http://localhost:9001
+    - **Elasticsearch**: http://{PUBLIC_URL}:9200
 
-Elasticsearch: http://localhost:9200
-
-Postgres: port 5432 (username/password in .env)
+    - **Postgres**: http://{PUBLIC_URL}:5432 (username/password in .env)

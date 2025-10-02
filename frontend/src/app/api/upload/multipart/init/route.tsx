@@ -33,14 +33,15 @@ export async function POST(req: Request) {
 
 
   // Save metadata in Postgres
-  let s3url: string;
-  if (process.env.MINIO_PUBLIC_ENDPOINT) {
-    s3url = process.env.MINIO_PUBLIC_ENDPOINT + "/" + process.env.MINIO_BUCKET + "/" + s3key;
-  } else {
-    s3url = "s3://" + process.env.MINIO_BUCKET + "/" + s3key;
-  }
+  const s3url: string = process.env.NEXT_PUBLIC_MINIO_ENDPOINT + "/" + process.env.MINIO_BUCKET
+    + "/" + s3key;
   const video = await prisma.videos.create({
-    data: { title: initReq.title, description: initReq.description, s3url: s3url, status: "uploading" },
+    data: {
+      title: initReq.title,
+      description: initReq.description,
+      s3url: s3url,
+      status: "uploading"
+    },
   });
 
   console.log("Sent to postgres")

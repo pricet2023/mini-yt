@@ -67,7 +67,12 @@ export default function UploadPage() {
 
     // Spin off worker to upload video to s3, 
     // This will upload the parts and then finalise
-    s3MultipartUpload(file, title, resp.s3key, resp.uploadId, resp.video.id);
+    s3MultipartUpload(file,
+      title,
+      resp.s3key,
+      resp.uploadId,
+      resp.video.id,
+      resp.video.uploaded_at);
 
     // reset form
     console.log("Resetting form");
@@ -127,7 +132,7 @@ export default function UploadPage() {
                     <progress value={video.progress}></progress>
                   </td>
                   <td className="border px-2 py-1">
-                    {new Date(video.uploaded_at).toLocaleTimeString()}
+                    {new Date(video.uploaded_at).toLocaleString()}
                   </td>
                 </tr>
               ))}
