@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useUploads } from "../uploadProvider";
 
 interface Video {
@@ -23,17 +23,26 @@ export default function UploadPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // grab global uploads state from UploadProvider
   const { uploads, s3MultipartUpload } = useUploads();
 
+  function resetFile() {
+    setFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
+    console.log("Submitted video");
     e.preventDefault();
     if (!file) {
       return;
     }
 
-    console.log("Submitted video");
-
+    console.log("Init multipart upload");
     const res = await fetch("/api/upload/multipart/init", {
       method: "POST",
       body: JSON.stringify({
@@ -61,7 +70,8 @@ export default function UploadPage() {
     s3MultipartUpload(file, title, resp.s3key, resp.uploadId, resp.video.id);
 
     // reset form
-    setFile(null);
+    console.log("Resetting form");
+    resetFile();
     setTitle("");
     setDescription("");
   }
@@ -86,6 +96,7 @@ export default function UploadPage() {
         <input
           type="file"
           accept="video/*"
+          ref={fileInputRef}
           onChange={(e) => setFile(e.target.files?.[0] || null)}
           className="block"
         />

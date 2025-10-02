@@ -82,6 +82,9 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
             })
         );
 
+        // sort parts in ascending order
+        parts.sort((a, b) => a.PartNumber - b.PartNumber)
+
         // 3. Finalize multipart upload
         console.log("completing upload");
         const completeRes = await fetch("/api/upload/multipart/complete", {
