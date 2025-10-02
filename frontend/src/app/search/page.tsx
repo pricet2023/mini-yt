@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 interface Video {
@@ -56,7 +57,12 @@ export default function SearchPage() {
           <tbody>
             {results.map((video) => (
               <tr key={video.id}>
-                <td className="border px-2 py-1">{video.title}</td>
+                <td className="border px-2 py-1">
+                  <Link href={`/video/${video.id}`}
+                    className="text-blue-600 hover:underline">
+                    {video.title}
+                  </Link>
+                </td>
                 <td className="border px-2 py-1">{video.description}</td>
                 <td className="border px-2 py-1">{video.status}</td>
                 <td className="border px-2 py-1">
