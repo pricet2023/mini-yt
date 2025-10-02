@@ -17,7 +17,7 @@ The goal is to replicate the core features of a video-sharing platform:
 - **Database:** PostgreSQL (Prisma ORM)
 - **Storage:** MinIO (S3-compatible) with presigned URL uploads
 - **Search:** Elasticsearch for full-text indexing
-- **Monitoring/Dev:** Docker Compose for local stack, Grafana + OpenTelemetry (optional)
+- **Dev:** Docker Compose for local stack
 
 ---
 
