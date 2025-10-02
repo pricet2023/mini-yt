@@ -21,14 +21,12 @@ The goal is to replicate the core features of a video-sharing platform:
 
 ---
 
-## 🗂 API
-
 ## 🐳 Running with Docker Compose
 
 1. **Clone the repo**
     ```bash
-    git clone https://github.com/<your-repo>.git
-    cd <your-repo>
+    git clone https://github.com/pricet2023/mini-yt.git
+    cd mini-yt
 
 2. **Create .env**
     Change or copy env.example to .env
@@ -50,10 +48,10 @@ The goal is to replicate the core features of a video-sharing platform:
     apache → Reverse proxy to MinIO (fixes Host header for presigned URLs)
 
 4. **Access services**
-    - **Frontend:**: http{PUBLIC_URL}:3000
+    - **Frontend:**: http{NEXT_PUBLIC_API_HOST}:3000
 
-    - **MinIO Console**: http://{PUBLIC_URL}:9001
+    - **MinIO Console**: http://{NEXT_PUBLIC_API_HOST}:9001
 
-    - **Elasticsearch**: http://{PUBLIC_URL}:9200
+    - **Elasticsearch**: http://{NEXT_PUBLIC_API_HOST}:9200
 
-    - **Postgres**: http://{PUBLIC_URL}:5432 (username/password in .env)
+    - **Postgres**: http://{NEXT_PUBLIC_API_HOST}:5432 (username/password in .env)
