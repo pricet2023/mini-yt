@@ -6,7 +6,7 @@ import { UploadPartCommand } from "@aws-sdk/client-s3";
 export async function POST(req: Request) {
   const { key, uploadId, partNumber } = await req.json();
 
-  console.log("getting presigned url");
+  console.log("getting presigned url for video chunk");
   const command = new UploadPartCommand({
     Bucket: process.env.MINIO_BUCKET!,
     Key: key,

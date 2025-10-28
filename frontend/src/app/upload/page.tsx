@@ -7,9 +7,10 @@ interface Video {
   id: number;
   title: string;
   description?: string;
-  status: string;
-  uploaded_at: string;
   s3url: string;
+  s3thumbnailurl: string;
+  uploaded_at: string;
+  status: string;
 }
 
 interface InitResp {

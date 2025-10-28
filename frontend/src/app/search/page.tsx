@@ -1,19 +1,58 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getBucketAndKey } from "@/lib/s3";
 
 interface Video {
   id: number;
   title: string;
   description?: string;
-  status: string;
+  s3url: string;
+  s3thumbnailurl: string;
   uploaded_at: string;
+  status: string;
+}
+
+interface ThumbnailRes {
+  publicUrl: string
 }
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Video[]>([]);
+
+  // handle new results coming in, need to grab thumbnails
+  useEffect(() => {
+    async function fetchThumbnailUrls() {
+      const updated = await Promise.all(
+        results.map(async (r) => {
+          try {
+            const { bucket, key } = getBucketAndKey(r.s3thumbnailurl);
+            
+            const params = new URLSearchParams({
+              key: key,
+              command: "GetObject",
+            });
+            const res = await fetch(`/api/upload/multipart/sign/thumbnail?${params.toString()}`, {
+              method: "GET",
+              headers: { "Content-Type": "application/json" },
+            })
+
+            const signedUrl: ThumbnailRes = await res.json();
+            console.log("Got signed thumbnail url: ", signedUrl);
+            return { ...r, s3thumbnailurl: signedUrl.publicUrl };
+          } catch (err) {
+            console.error("Failed to load thumbnail", r.id, err);
+            return r;
+          }
+        })
+      );
+      setResults(updated);
+
+    }
+    if (results.length > 0) fetchThumbnailUrls();
+  }, [results.length])
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -53,7 +92,7 @@ export default function SearchPage() {
             {/* Thumbnail */}
             <div className="flex-shrink-0 w-48 h-28 bg-gray-700 rounded overflow-hidden">
               <img
-                src={"/placeholder.png"}
+                src={video.s3thumbnailurl}
                 alt={video.title}
                 className="w-full h-full object-cover"
               />

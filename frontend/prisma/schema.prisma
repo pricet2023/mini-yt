@@ -13,6 +13,7 @@ model videos {
   title       String
   description String?
   s3url    String
+  s3thumbnailurl    String
   uploaded_at  DateTime @default(now())
   status      String @default("uploading")
 }

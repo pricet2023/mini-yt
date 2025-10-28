@@ -27,8 +27,6 @@ export default function VideoPage() {
 
             console.log("got url");
 
-
-
             const video: VideoMeta = await res.json();
             console.log("url, ", video.s3url);
             setVideoMeta(video);

@@ -25,6 +25,46 @@ interface signResp {
 
 const UploadContext = createContext<UploadContextType | null>(null);
 
+async function extractRandomFrame(file: File): Promise<Blob> {
+    // Create a blob URL so the video element can play it
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.src = url;
+    video.crossOrigin = "anonymous"; // important if remote sources are used
+    video.muted = true; // prevent autoplay restrictions
+    video.playsInline = true;
+
+    await new Promise((resolve, reject) => {
+        video.onloadedmetadata = () => {
+            // Random timestamp between 10% and 90% of duration
+            const randomTime = video.duration * (0.1 + 0.8 * Math.random());
+            video.currentTime = randomTime;
+        };
+        video.onseeked = resolve;
+        video.onerror = reject;
+    });
+
+    // Draw frame to canvas
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Could not get 2D context");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Convert to Blob (JPEG to save space)
+    const blob = await new Promise<Blob>((resolve) =>
+        canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.8)
+    );
+
+    // Cleanup
+    URL.revokeObjectURL(url);
+
+    return blob;
+
+}
+
 export function UploadProvider({ children }: { children: React.ReactNode }) {
     const [uploads, setUploads] = useState<Upload[]>([]);
 
@@ -44,6 +84,36 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
             uploaded_at: uploaded_at,
         }
         setUploads((prev) => [...prev, newUpload]);
+
+        // Grab a thumbnail and generate pre-signed url
+        const thumbnail: Blob = await extractRandomFrame(file);
+
+        console.log("getting pre-signed url for thumbnail");
+        const s3thumbnailkey = key + ".thumbnail";
+
+        const params = new URLSearchParams({
+            key: s3thumbnailkey,
+            command: "PutObject",
+        });
+        const signRes = await fetch(`/api/upload/multipart/sign/thumbnail?${params.toString()}`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" }
+        });
+        if (!signRes.ok) throw new Error(`Thumbnail failed`);
+
+        const resp: signResp = await signRes.json();
+        console.log("got presigned thumbnail url, ", resp.publicUrl);
+        // Upload directly to S3
+        const res = await fetch(resp.publicUrl, {
+            method: "PUT",
+            headers: { "Content-Type": "video/mp4" },
+            body: thumbnail,
+        });
+
+        if (!res.ok) throw new Error(`Thumbnail failed`);
+
+        console.log("Uploaded thumbnail: ", key);
+
 
         // Chunk up file
         console.log("chunking file");
@@ -70,6 +140,8 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ key, uploadId, partNumber }),
                 });
+                if (!signRes.ok) throw new Error(`Part ${partNumber} failed`);
+
 
                 const resp: signResp = await signRes.json();
                 console.log("got presigned url, ", resp.publicUrl);

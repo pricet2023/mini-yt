@@ -1,30 +1,10 @@
 import { NextResponse, NextRequest } from "next/server";
-import { s3 } from "@/lib/s3";
+import { s3, getBucketAndKey } from "@/lib/s3";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-
-function getBucketAndKey(s3url: string): { bucket: string; key: string } {
-    try {
-        const url = new URL(s3url);
-
-        // Remove leading slash from pathname
-        const parts = url.pathname.replace(/^\/+/, "").split("/");
-
-        if (parts.length < 2) {
-            throw new Error(`Invalid S3 URL: ${s3url}`);
-        }
-
-        const bucket = parts.shift()!; // first part = bucket
-        const key = parts.join("/");   // rest = object key
-
-        return { bucket, key };
-    } catch (err) {
-        throw new Error(`Could not parse S3 URL: ${s3url} (${err})`);
-    }
-}
 
 export async function GET(
     req: NextRequest,
@@ -42,7 +22,6 @@ export async function GET(
 
         const { bucket, key } = getBucketAndKey(video.s3url);
 
-        // Assume videoId corresponds to the S3 key (you can map via Postgres if needed)
         const command = new GetObjectCommand({
             Bucket: bucket,
             Key: key,
