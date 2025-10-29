@@ -5,6 +5,7 @@
       "title":       { "type": "text" },
       "description": { "type": "text" },
       "s3url":    { "type": "text" },
+      "s3thumbnailurl":    { "type": "text" },
       "uploaded_at":  { "type": "date" },
       "status": { "type": "text" }
     }
